@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.patrick-mc"
-version = "0.3-beta"
+version = "0.4-beta"
 
 repositories {
     maven("https://repo.maven.apache.org/maven2/")
@@ -25,7 +25,7 @@ dependencies {
 tasks {
     compileKotlin { kotlinOptions.jvmTarget = "1.8" }
 
-    val dokka by getting(org.jetbrains.dokka.gradle.DokkaTask::class) {
+    dokka {
         outputFormat = "javadoc"
         outputDirectory = "$buildDir/dokka"
 
@@ -48,16 +48,17 @@ tasks {
 }
 
 
-publishing {
-    publications {
-        create<MavenPublication>("vectorGame") {
-            from(components["java"])
+try {
+    publishing {
+        publications {
+            create<MavenPublication>("vectorGame") {
+                from(components["java"])
 
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["dokkaJar"])
+                artifact(tasks["sourcesJar"])
+                artifact(tasks["dokkaJar"])
 
-            repositories {
-                mavenLocal()
+                repositories {
+                    mavenLocal()
 
                 maven {
                     name = "central"
@@ -100,12 +101,15 @@ publishing {
                     url.set("https://github.com/patrick-mc/vector-game")
                 }
             }
+            }
         }
     }
-}
 
-signing {
-    isRequired = true
-    sign(tasks["jar"], tasks["sourcesJar"], tasks["dokkaJar"])
-    sign(publishing.publications["vectorGame"])
+    signing {
+        isRequired = true
+        sign(tasks["jar"], tasks["sourcesJar"], tasks["dokkaJar"])
+        sign(publishing.publications["vectorGame"])
+    }
+} catch (e: groovy.lang.MissingPropertyException) {
+    e.printStackTrace()
 }

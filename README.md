@@ -25,6 +25,10 @@
 > - Must compile it with Kotlin, or use external Kotlin library. 
 > - You can use [kotlin-1.3.70-lib.jar](https://github.com/noonmaru/kotlin-plugin/releases/download/1.3.70/kotlin-1.3.70-lib.jar) built by Noonmaru for external Kotlin library.
 
+> #### How to use
+> - Use '/vector' to toggle vector functions
+> - Command alias: '/vc', '/vec', '/vctr', '/벡터'
+
 > #### Gradle (Groovy)
 >```groovy
 >allprojects {
@@ -37,7 +41,7 @@
 >
 >...
 >dependencies {
->    implementation 'com.github.patrick-mc:vector-game:0.3-beta'
+>    implementation 'com.github.patrick-mc:vector-game:0.4-beta'
 >}
 >```
 
@@ -52,6 +56,6 @@
 >
 >...
 >dependencies {
->    implementation("com.github.patrick-mc:vector-game:0.3d-beta")
+>    implementation("com.github.patrick-mc:vector-game:0.4-beta")
 >}
 >```

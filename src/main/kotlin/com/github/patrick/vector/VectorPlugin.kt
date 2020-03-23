@@ -34,6 +34,7 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.HandlerList.unregisterAll
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action.LEFT_CLICK_AIR
 import org.bukkit.event.block.Action.LEFT_CLICK_BLOCK
@@ -42,9 +43,8 @@ import org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
-import kotlin.random.Random.Default.nextDouble
-import org.bukkit.event.HandlerList.unregisterAll
 import java.io.File
+import kotlin.random.Random.Default.nextDouble
 
 class VectorPlugin : JavaPlugin(), Listener {
     private var status = false
@@ -52,26 +52,14 @@ class VectorPlugin : JavaPlugin(), Listener {
 
     private var lastModified: Long? = null
     private var bothHands: Boolean = false
+    private var singleTime: Boolean = false
     private var velocityModifier: Double = 0.0
     private var maxVelocity: Double = 0.0
 
     private fun statusOn(): Boolean {
         status = true
         registerEvents(this, this)
-        getScheduler().runTaskTimer(this, {
-            selectedEntities.forEach {
-                val pos = it.value.location.clone()
-                if (!it.key.isValid || !it.value.isValid) selectedEntities.remove(it.key)
-                else it.key.let { player ->
-                    player.getTarget().let { target ->
-                        for (i in 0 until pos.distance(target).times(5).toInt()) {
-                            val loc = pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
-                            pos.world.spawnParticle(REDSTONE, loc, 0, nextDouble(255.0), nextDouble(255.0), nextDouble(255.0))
-                        }
-                    }
-                }
-            }
-        }, 0, 1)
+        getScheduler().runTaskTimer(this, { selectedEntities.forEach { newParticle(it) } }, 0, 1)
         broadcastMessage("Vector On")
         return true
     }
@@ -87,8 +75,9 @@ class VectorPlugin : JavaPlugin(), Listener {
     private fun Player.getTarget(): Location {
         val loc = eyeLocation.clone()
         val view = loc.clone().add(loc.clone().direction.normalize().multiply(5))
-        val block = MATH.rayTraceBlock(loc.world, Vector(loc.x, loc.y, loc.z), Vector(view.x, view.y, view.z), 0)
-            ?: return loc.clone().add(eyeLocation.direction.clone().normalize().multiply(5))
+        val block =
+            MATH.rayTraceBlock(loc.world, Vector(loc.x, loc.y, loc.z), Vector(view.x, view.y, view.z), 0)
+                ?: return loc.clone().add(eyeLocation.direction.clone().normalize().multiply(5))
         block.blockPoint.let {
             return loc.world.getBlockAt(it.x, it.y, it.z).getRelative(block.face).location.add(0.5, 0.5, 0.5)
         }
@@ -97,7 +86,8 @@ class VectorPlugin : JavaPlugin(), Listener {
     private fun setTargetVelocity(player: Player, remove: Boolean): Boolean? {
         selectedEntities[player]?.let {
             val vector = player.getTarget().subtract(it.location).toVector()
-            it.velocity = if (vector.length() < maxVelocity / velocityModifier) vector.multiply(velocityModifier) else vector.normalize().multiply(maxVelocity)
+            it.velocity = if (vector.length() < maxVelocity / velocityModifier) vector.multiply(velocityModifier) else
+                vector.normalize().multiply(maxVelocity)
             if (remove) selectedEntities.remove(player)
             return true
         }
@@ -124,6 +114,21 @@ class VectorPlugin : JavaPlugin(), Listener {
         found?.let { selectedEntities[player] = it }
     }
 
+    private fun newParticle(it: Map.Entry<Player, Entity>) {
+        val pos = it.value.location.clone()
+        if (!it.key.isValid || !it.value.isValid) selectedEntities.remove(it.key)
+        else it.key.let { player ->
+            player.getTarget().let { target ->
+                for (i in 0 until pos.distance(target).times(5).toInt()) {
+                    val loc = pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
+                    pos.world.spawnParticle(REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
+                }
+            }
+        }
+    }
+
+    private fun newRandom(): Double = nextDouble(255.0)
+
     override fun onEnable() {
         saveDefaultConfig()
         getScheduler().runTaskTimer(this, {
@@ -133,29 +138,39 @@ class VectorPlugin : JavaPlugin(), Listener {
                 lastModified = last
                 reloadConfig()
                 bothHands = config.getBoolean("use-both-hands")
+                singleTime = config.getBoolean("set-single-time")
                 velocityModifier = config.getDouble("velocity-modifier")
                 maxVelocity = config.getDouble("max-velocity")
             }
         }, 0, 1)
     }
 
-    override fun onCommand(sender: CommandSender?, command: Command?, label: String?, args: Array<out String>?): Boolean {
+    override fun onCommand(
+        sender: CommandSender?,
+        command: Command?,
+        label: String?,
+        args: Array<out String>?
+    ): Boolean {
         return if (!status) statusOn()
         else statusOff()
     }
 
-    override fun onTabComplete(sender: CommandSender?, command: Command?, alias: String?, args: Array<out String>?) = emptyList<String>()
+    override fun onTabComplete(sender: CommandSender?, command: Command?, alias: String?, args: Array<out String>?) =
+        emptyList<String>()
 
     @EventHandler
     fun onInteract(event: PlayerInteractEvent) {
         val player = event.player
         val action = event.action
         if (event.item?.type == Material.BLAZE_ROD && player.hasPermission("command.vector.use")) {
-            if (action == RIGHT_CLICK_AIR || action == RIGHT_CLICK_BLOCK) {
-                if (!bothHands) setTargetVelocity(player, true) ?: newRayTrace(player)
+            if (setOf(RIGHT_CLICK_AIR, RIGHT_CLICK_BLOCK).contains(action)) {
+                if (!bothHands) setTargetVelocity(player, singleTime) ?: newRayTrace(player)
                 else newRayTrace(player)
             }
-            if ((action == LEFT_CLICK_AIR || action == LEFT_CLICK_BLOCK) && bothHands) setTargetVelocity(player, false)
+            if (setOf(LEFT_CLICK_AIR, LEFT_CLICK_BLOCK).contains(action) && bothHands) setTargetVelocity(
+                player,
+                singleTime
+            )
             event.isCancelled = true
         }
     }

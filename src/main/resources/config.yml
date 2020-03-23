@@ -3,8 +3,12 @@
 # Sets whether to use both hands or not.
 # If true, players can select entity with right click and set velocity any time using left click.
 # If false, players can both select entity and set velocity with right click.
-# - Players need to select entity every time they want to set velocity.
 use-both-hands: false
+
+# Sets whether to set velocity single time or multiple times.
+# If true, players can set velocity once after selecting entity.
+# If false, players can set velocity multiple times until selecting new entity.
+set-single-time: true
 
 # Sets velocity modifier
 # Put Double value to modify velocity.
