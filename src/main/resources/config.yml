@@ -1,0 +1,18 @@
+# Default Configuration (written by PatrickKR, on Mar 23, 2020)
+
+# Sets whether to use both hands or not.
+# If true, players can select entity with right click and set velocity any time using left click.
+# If false, players can both select entity and set velocity with right click.
+# - Players need to select entity every time they want to set velocity.
+use-both-hands: false
+
+# Sets velocity modifier
+# Put Double value to modify velocity.
+# If set to 1.0, the velocity would be so big that entity could move too far.
+# Recommended Value: 0.2 ~ 0.4
+velocity-modifier: 0.3
+
+# Sets maximum velocity
+# Put Double value to set maximum velocity.
+# Recommended Value: 20 ~ 30
+max-velocity: 24

@@ -1,0 +1,33 @@
+name: VectorGame
+version: 0.3-beta
+description: A vector game for education
+api-version: "1.12"
+load: POSTWORLD
+authors: [PatrickKR, Nemo]
+website: https://github.com/patrick-mc
+main: com.github.patrick.vector.VectorPlugin
+database: false
+depend: [Tap, Kotlin]
+prefix: VECTOR
+commands:
+  vector:
+    description: Vector Game Command
+    aliases: [vc, vec, vctr, 벡터]
+    permission: command.vector
+    permission-message: You do not have permission to use vector game commands.
+    usage: "Usage: /<command> help"
+default-permission: op
+permissions:
+  command.vector:
+    default: op
+    description: Vector Game Command Permission
+  command.vector.*:
+    default: op
+    children:
+      command.vector.toggle: true
+      command.vector.use: true
+    command.vector.toggle: &command
+      default: op
+      children:
+        command.vector: true
+    command.vector.use: *command
