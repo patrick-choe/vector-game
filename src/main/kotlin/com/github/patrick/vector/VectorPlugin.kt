@@ -47,7 +47,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
-import java.nio.file.Paths
 import kotlin.random.Random.Default.nextDouble
 
 class VectorPlugin : JavaPlugin(), Listener {
@@ -177,7 +176,7 @@ class VectorPlugin : JavaPlugin(), Listener {
                     3 -> {
                         if (config.getKeys(false).contains(args[1])) {
                             try {
-                                val path = Paths.get(dataFolder.toURI().path + File.separator +  "config.yml")
+                                val path = File(dataFolder, "config.yml").toPath()
                                 val lines = Files.readAllLines(path, UTF_8)
                                 for (i in 0 until lines.count()) {
                                     if (lines[i].contains(args[1])) when {
@@ -201,6 +200,7 @@ class VectorPlugin : JavaPlugin(), Listener {
                     }
                 }
             }
+            sender.unrecognizedMessage("args", args[0])
             return false
         }
         return if (!status) statusOn() else statusOff()
@@ -212,7 +212,7 @@ class VectorPlugin : JavaPlugin(), Listener {
             2 -> if (args[0].resetRegexMatch()) getKeys().filter { it.startsWith(args[1], true) } else emptyList()
             3 -> if (args[0].resetRegexMatch() && getKeys().contains(args[1])) {
                 if (!args[1].contains("double", true))
-                    setOf("true, false").filter { it.startsWith(args[1], true) }
+                    setOf("true", "false").filter { it.startsWith(args[2], true) }
                 else emptyList()
             } else emptyList()
             else -> emptyList()
