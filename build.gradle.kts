@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.patrick-mc"
-version = "0.4-beta"
+version = "0.4.2-beta"
 
 repositories {
     maven("https://repo.maven.apache.org/maven2/")
@@ -68,7 +68,9 @@ try {
                         password = project.property("centralPassword").toString()
                     }
 
-                    url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+                    url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
                 }
             }
 
