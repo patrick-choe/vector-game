@@ -2,11 +2,11 @@ plugins {
     `maven-publish`
     signing
     kotlin("jvm") version "1.3.70"
-    id("org.jetbrains.dokka") version "0.10.1"
+    id("org.jetbrains.dokka") version "0.10.0"
 }
 
 group = "com.github.patrick-mc"
-version = "0.5-beta"
+version = "0.5.1-beta"
 
 repositories {
     maven("https://repo.maven.apache.org/maven2/")
@@ -25,8 +25,7 @@ dependencies {
 tasks {
     compileKotlin { kotlinOptions.jvmTarget = "1.8" }
 
-    @kotlin.Suppress("deprecated")
-    val dokka by getting(org.jetbrains.dokka.gradle.DokkaTask::class) {
+    dokka {
         outputFormat = "javadoc"
         outputDirectory = "$buildDir/dokka"
 
