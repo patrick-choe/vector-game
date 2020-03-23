@@ -44,6 +44,10 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
+import java.io.IOException
+import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.Files
+import java.nio.file.Paths
 import kotlin.random.Random.Default.nextDouble
 
 class VectorPlugin : JavaPlugin(), Listener {
@@ -51,10 +55,11 @@ class VectorPlugin : JavaPlugin(), Listener {
     private val selectedEntities = HashMap<Player, Entity>()
 
     private var lastModified: Long? = null
-    private var bothHands: Boolean = false
-    private var singleTime: Boolean = false
-    private var velocityModifier: Double = 0.0
-    private var maxVelocity: Double = 0.0
+    private var bothHands = false
+    private var singleTime = false
+    private var visibilityLength = 0.0
+    private var velocityModifier = 0.0
+    private var maxVelocity = 0.0
 
     private fun statusOn(): Boolean {
         status = true
@@ -72,16 +77,24 @@ class VectorPlugin : JavaPlugin(), Listener {
         return true
     }
 
+    private fun CommandSender.requireMessage(message: String) = sendMessage("Required: $message")
+
+    private fun CommandSender.unrecognizedMessage(message: String, value: String) = sendMessage("Unrecognized $message: '$value'")
+
     private fun Player.getTarget(): Location {
         val loc = eyeLocation.clone()
-        val view = loc.clone().add(loc.clone().direction.normalize().multiply(5))
+        val view = loc.clone().add(loc.clone().direction.normalize().multiply(visibilityLength))
         val block =
             MATH.rayTraceBlock(loc.world, Vector(loc.x, loc.y, loc.z), Vector(view.x, view.y, view.z), 0)
-                ?: return loc.clone().add(eyeLocation.direction.clone().normalize().multiply(5))
+                ?: return loc.clone().add(eyeLocation.direction.clone().normalize().multiply(visibilityLength))
         block.blockPoint.let {
             return loc.world.getBlockAt(it.x, it.y, it.z).getRelative(block.face).location.add(0.5, 0.5, 0.5)
         }
     }
+
+    private fun String.resetRegexMatch(): Boolean = contains(Regex("(?i)conf|set"))
+
+    private fun getKeys() = config.getKeys(false)
 
     private fun setTargetVelocity(player: Player, remove: Boolean): Boolean? {
         selectedEntities[player]?.let {
@@ -139,17 +152,71 @@ class VectorPlugin : JavaPlugin(), Listener {
                 reloadConfig()
                 bothHands = config.getBoolean("use-both-hands")
                 singleTime = config.getBoolean("set-single-time")
-                velocityModifier = config.getDouble("velocity-modifier")
-                maxVelocity = config.getDouble("max-velocity")
+                visibilityLength = config.getDouble("visibility-length-double")
+                velocityModifier = config.getDouble("velocity-modifier-double")
+                maxVelocity = config.getDouble("max-velocity-double")
             }
         }, 0, 1)
     }
 
-    override fun onCommand(sender: CommandSender?, command: Command?, label: String?, args: Array<out String>?) =
-        if (!status) statusOn() else statusOff()
+    @Throws(IOException::class, NumberFormatException::class)
+    override fun onCommand(sender: CommandSender, command: Command?, label: String?, args: Array<out String>): Boolean {
+        if (args.isNotEmpty()) {
+            if (args[0].resetRegexMatch()) {
+                when (args.size) {
+                    1 -> sender.requireMessage("key, value").also { return false }
+                    2 -> {
+                        if (args[1].contains("reset", true)) {
+                            File(dataFolder, "config.yml").delete()
+                            saveDefaultConfig()
+                            return true
+                        }
+                        if (config.getKeys(false).contains(args[1])) sender.requireMessage("value").also { return true }
+                        sender.unrecognizedMessage("key", args[1])
+                    }
+                    3 -> {
+                        if (config.getKeys(false).contains(args[1])) {
+                            try {
+                                val path = Paths.get(dataFolder.toURI().path + File.separator +  "config.yml")
+                                val lines = Files.readAllLines(path, UTF_8)
+                                for (i in 0 until lines.count()) {
+                                    if (lines[i].contains(args[1])) when {
+                                        args[1].contains("double") -> lines[i] = "${args[1]}: ${args[2].toDouble()}"
+                                        args[2].contains("true", true) -> lines[i] = "${args[1]}: true"
+                                        args[2].contains("false", true) -> lines[i] = "${args[1]}: false"
+                                        else -> sender.unrecognizedMessage("value", args[2])
+                                    }
+                                }
+                                Files.write(path, lines, UTF_8)
+                                return true
+                            } catch (e: Exception) {
+                                when (e) {
+                                    is IOException -> logger.info("Cannot read/write to config.yml")
+                                    is NumberFormatException -> sender.unrecognizedMessage("value", args[2])
+                                    else -> throw e
+                                }
+                                return false
+                            }
+                        }
+                    }
+                }
+            }
+            return false
+        }
+        return if (!status) statusOn() else statusOff()
+    }
 
-    override fun onTabComplete(sender: CommandSender?, command: Command?, alias: String?, args: Array<out String>?) =
-        emptyList<String>()
+    override fun onTabComplete(sender: CommandSender?, command: Command?, alias: String?, args: Array<out String>) =
+        when (args.size) {
+            1 -> setOf("config").filter { it.startsWith(args[0], true) }
+            2 -> if (args[0].resetRegexMatch()) getKeys().filter { it.startsWith(args[1], true) } else emptyList()
+            3 -> if (args[0].resetRegexMatch() && getKeys().contains(args[1])) {
+                if (!args[1].contains("double", true))
+                    setOf("true, false").filter { it.startsWith(args[1], true) }
+                else emptyList()
+            } else emptyList()
+            else -> emptyList()
+        }
 
     @EventHandler
     fun onInteract(event: PlayerInteractEvent) {

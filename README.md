@@ -14,8 +14,8 @@
 [![GitHub Downloads](https://img.shields.io/github/downloads/patrick-mc/vector-game/total)](https://github.com/patrick-mc/vector-game/releases)
 [![GitHub Issues](https://img.shields.io/github/issues-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/issues?q=is%3Aissue+is%3Aopen)
 [![GitHub Closed Issues](https://img.shields.io/github/issues-closed-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/issues?q=is%3Aissue+is%3Aclosed)
-[![GitHub Issues](https://img.shields.io/github/issues-pr-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/pulls?q=is%3Apr+is%3Aopen)
-[![GitHub Closed Issues](https://img.shields.io/github/issues-pr-closed-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/pulls?q=is%3Apr+is%3Aclosed)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/pulls?q=is%3Apr+is%3Aopen)
+[![GitHub Closed Pull Requests](https://img.shields.io/github/issues-pr-closed-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/pulls?q=is%3Apr+is%3Aclosed)
 
 > A vector game for education
 
@@ -41,7 +41,7 @@
 >
 >...
 >dependencies {
->    implementation 'com.github.patrick-mc:vector-game:0.5.1-beta'
+>    implementation 'com.github.patrick-mc:vector-game:0.6-beta'
 >}
 >```
 
@@ -56,6 +56,6 @@
 >
 >...
 >dependencies {
->    implementation("com.github.patrick-mc:vector-game:0.5.1-beta")
+>    implementation("com.github.patrick-mc:vector-game:0.6-beta")
 >}
 >```

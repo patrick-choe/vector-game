@@ -10,13 +10,18 @@ use-both-hands: false
 # If false, players can set velocity multiple times until selecting new entity.
 set-single-time: true
 
+# Sets players' visibility length when selecting entities
+# Put double value to modify visibility length.
+# Recommended value: 4.0 ~
+visibility-length-double: 5.0
+
 # Sets velocity modifier
 # Put Double value to modify velocity.
 # If set to 1.0, the velocity would be so big that entity could move too far.
-# Recommended Value: 0.2 ~ 0.4
-velocity-modifier: 0.3
+# Recommended value: 0.2 ~ 0.4
+velocity-modifier-double: 0.3
 
 # Sets maximum velocity
 # Put Double value to set maximum velocity.
-# Recommended Value: 20 ~ 30
-max-velocity: 24
+# Recommended value: 20 ~ 30
+max-velocity-double: 24
