@@ -2,11 +2,11 @@ plugins {
     `maven-publish`
     signing
     kotlin("jvm") version "1.3.70"
-    id("org.jetbrains.dokka") version "0.10.0"
+    id("org.jetbrains.dokka") version "0.10.1"
 }
 
 group = "com.github.patrick-mc"
-version = "0.4.3-beta"
+version = "0.5-beta"
 
 repositories {
     maven("https://repo.maven.apache.org/maven2/")
@@ -17,15 +17,16 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT")
-    implementation("com.github.noonmaru:tap:1.0.1")
+    api(kotlin("stdlib-jdk8"))
+    api("org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT")
+    api("com.github.noonmaru:tap:1.0.1")
 }
 
 tasks {
     compileKotlin { kotlinOptions.jvmTarget = "1.8" }
 
-    dokka {
+    @kotlin.Suppress("deprecated")
+    val dokka by getting(org.jetbrains.dokka.gradle.DokkaTask::class) {
         outputFormat = "javadoc"
         outputDirectory = "$buildDir/dokka"
 

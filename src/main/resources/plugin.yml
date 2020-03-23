@@ -1,5 +1,5 @@
 name: VectorGame
-version: 0.4.3-beta
+version: 0.5-beta
 description: A vector game for education
 api-version: "1.12"
 load: POSTWORLD
