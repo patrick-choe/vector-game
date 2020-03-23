@@ -145,15 +145,8 @@ class VectorPlugin : JavaPlugin(), Listener {
         }, 0, 1)
     }
 
-    override fun onCommand(
-        sender: CommandSender?,
-        command: Command?,
-        label: String?,
-        args: Array<out String>?
-    ): Boolean {
-        return if (!status) statusOn()
-        else statusOff()
-    }
+    override fun onCommand(sender: CommandSender?, command: Command?, label: String?, args: Array<out String>?) =
+        if (!status) statusOn() else statusOff()
 
     override fun onTabComplete(sender: CommandSender?, command: Command?, alias: String?, args: Array<out String>?) =
         emptyList<String>()
@@ -167,10 +160,7 @@ class VectorPlugin : JavaPlugin(), Listener {
                 if (!bothHands) setTargetVelocity(player, singleTime) ?: newRayTrace(player)
                 else newRayTrace(player)
             }
-            if (setOf(LEFT_CLICK_AIR, LEFT_CLICK_BLOCK).contains(action) && bothHands) setTargetVelocity(
-                player,
-                singleTime
-            )
+            if (setOf(LEFT_CLICK_AIR, LEFT_CLICK_BLOCK).contains(action) && bothHands) setTargetVelocity(player,singleTime)
             event.isCancelled = true
         }
     }
