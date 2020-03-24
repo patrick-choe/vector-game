@@ -44,11 +44,13 @@ import org.bukkit.event.block.Action.RIGHT_CLICK_AIR
 import org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.permissions.Permissible
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.Files
+import java.nio.file.Files.readAllLines
+import java.nio.file.Files.write
 import kotlin.random.Random.Default.nextDouble
 import kotlin.streams.toList
 
@@ -77,20 +79,20 @@ class VectorPlugin : JavaPlugin(), Listener {
 
     private fun newRandom(): Double = nextDouble(255.0)
 
-    private fun statusOn(): Boolean {
+    private fun Permissible.perm(perm: String) = hasPermission(perm)
+
+    private fun statusOn() {
         status = true
         registerEvents(this, this)
         getScheduler().runTaskTimer(this, { selectedEntities.forEach { newParticle(it) } }, 0, 1)
         broadcastMessage("Vector On")
-        return true
     }
 
-    private fun statusOff(): Boolean {
+    private fun statusOff() {
         status = false
         unregisterAll(this as JavaPlugin)
         getScheduler().cancelTasks(this)
         broadcastMessage("Vector Off")
-        return true
     }
 
     private fun Player.getTarget(): Location {
@@ -114,7 +116,7 @@ class VectorPlugin : JavaPlugin(), Listener {
     private fun getCurrentConfig(args: Array<out String>, sender: CommandSender) {
         try {
             val path = File(dataFolder, "config.yml").toPath()
-            val lines = Files.readAllLines(path, UTF_8)
+            val lines = readAllLines(path, UTF_8)
 
             for (i in 0 until lines.count())
                 if (lines[i].contains(args[1]))
@@ -126,10 +128,10 @@ class VectorPlugin : JavaPlugin(), Listener {
         } catch (e: IOException) { logger.info("Cannot read/write to config.yml") }
     }
 
-    private fun setConfig(args: Array<out String>, sender: CommandSender): Boolean {
+    private fun setConfig(args: Array<out String>, sender: CommandSender) {
         try {
             val path = File(dataFolder, "config.yml").toPath()
-            val lines = Files.readAllLines(path, UTF_8)
+            val lines = readAllLines(path, UTF_8)
             for (i in 0 until lines.count()) {
                 if (lines[i].contains(args[1])) when {
                     args[1].contains("double") -> lines[i] = "${args[1]}: ${args[2].toDouble()}"
@@ -137,19 +139,16 @@ class VectorPlugin : JavaPlugin(), Listener {
                         getMaterial(args[2].toUpperCase())?: sender.unrecognizedMessage("key", args[2])
                         lines[i] = "${args[1]}: ${args[2].toUpperCase()}"
                     }
-                    args[2].contains("true", true) -> lines[i] = "${args[1]}: true"
-                    args[2].contains("false", true) -> lines[i] = "${args[1]}: false"
+                    args[2].matches(Regex("true|false")) -> lines[i] = "${args[1]}: ${args[2]}"
                     else -> sender.unrecognizedMessage("value", args[2])
                 }
             }
-            Files.write(path, lines, UTF_8)
-            return true
+            write(path, lines, UTF_8)
         } catch (e: Exception) {
             when (e) {
                 is IOException -> logger.info("Cannot read/write to config.yml")
                 is NumberFormatException -> sender.unrecognizedMessage("value", args[2])
             }
-            return true
         }
     }
 
@@ -217,47 +216,35 @@ class VectorPlugin : JavaPlugin(), Listener {
     }
 
     override fun onCommand(sender: CommandSender, command: Command?, label: String?, args: Array<out String>): Boolean {
-        if (args.isNotEmpty()) {
-            if (args[0].contains("help", true)) sendHelp(sender).also { return true }
-            if (!sender.hasPermission("command.vector.config"))
-                sender.sendMessage("No Permission").also { return true }
-            if (args[0].resetRegexMatch()) {
-                when (args.size) {
-                    1 -> sender.requireMessage("key, value").also { return true }
-                    2 -> {
-                        if (args[1].contains("reset", true)) {
-                            File(dataFolder, "config.yml").delete()
-                            saveDefaultConfig()
-                            return true
-                        }
-                        if (config.getKeys(false).contains(args[1]))
-                            getCurrentConfig(args, sender).also { return true }
-                        sender.unrecognizedMessage("key", args[1])
-                        return true
+        if (args.isNotEmpty()) when {
+            args[0].contains("help", true) -> sendHelp(sender)
+            args[0].resetRegexMatch() && sender.perm("command.vector.config") -> when (args.size) {
+                1 -> sender.requireMessage("key, value")
+                2 -> when {
+                    args[1].contains("reset", true) -> {
+                        File(dataFolder, "config.yml").delete()
+                        saveDefaultConfig()
                     }
-                    3 -> {
-                        if (config.getKeys(false).contains(args[1])) return setConfig(args, sender)
-                        sender.unrecognizedMessage("key", args[1])
-                        return true
-                    }
-                }
-            }
-            sender.unrecognizedMessage("args", args[0])
-            return true
-        }
-        if (!sender.hasPermission("command.vector.use")) sender.sendMessage("No Permission").also { return true }
-        return if (!status) statusOn() else statusOff()
+                    config.getKeys(false).contains(args[1]) -> getCurrentConfig(args, sender)
+                    else -> sender.unrecognizedMessage("key", args[1])
+                } 3 -> when {
+                    config.getKeys(false).contains(args[1]) -> setConfig(args, sender)
+                    else -> sender.unrecognizedMessage("key", args[1])
+                } else -> sender.unrecognizedMessage("args", args.drop(3).toString())
+            } else -> sender.unrecognizedMessage("args", args[0])
+        } else if (sender.perm("command.vector.toggle")) if (!status) statusOn() else statusOff()
+        return true
     }
 
     override fun onTabComplete(sender: CommandSender?, command: Command?, alias: String?, args: Array<out String>) =
         when (args.size) {
             1 -> listOf("config", "help").filter(args[0])
             2 -> if (args[0].resetRegexMatch()) getKeys().filter(args[1]) else emptyList()
-            3 -> if (args[0].resetRegexMatch() && getKeys().contains(args[1])) {
-                if (args[1].contains("item", true))
+            3 -> if (args[0].resetRegexMatch() && getKeys().contains(args[1])) when {
+                args[1].contains("item", true) ->
                     Material.values().toList().stream().map(Material::name).toList().filter(args[2])
-                else if (!args[1].contains("double", true)) listOf("true", "false").filter(args[2])
-                else emptyList()
+                !args[1].contains("double", true) -> listOf("true", "false").filter(args[2])
+                else -> emptyList()
             } else emptyList()
             else -> emptyList()
         }
@@ -266,7 +253,7 @@ class VectorPlugin : JavaPlugin(), Listener {
     fun onInteract(event: PlayerInteractEvent) {
         val player = event.player
         val action = event.action
-        if (event.item?.type == vectorItem && player.hasPermission("command.vector.use")) {
+        if (event.item?.type == vectorItem && player.perm("command.vector.use")) {
             if (setOf(RIGHT_CLICK_AIR, RIGHT_CLICK_BLOCK).contains(action)) {
                 if (!bothHands) setTargetVelocity(player, singleTime) ?: newRayTrace(player)
                 else newRayTrace(player)
