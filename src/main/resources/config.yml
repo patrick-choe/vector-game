@@ -1,4 +1,10 @@
-# Default Configuration (written by PatrickKR, on Mar 23, 2020)
+# Default Configuration (written by PatrickKR, on Mar 24, 2020)
+# Please do not remove the comments since it is used by vector command.
+
+# Sets item to use for this plugin
+# This directly translates to 'Material' in Spigot.
+# If you are not familiar with it, DO NOT CHANGE.
+vector-item: BLAZE_ROD
 
 # Sets whether to use both hands or not.
 # If true, players can select entity with right click and set velocity any time using left click.
@@ -15,8 +21,7 @@ set-single-time: true
 # Recommended value: 4.0 ~
 visibility-length-double: 5.0
 
-# Sets velocity modifier
-# Put Double value to modify velocity.
+# Sets velocity modifier, put Double value to modify velocity.
 # If set to 1.0, the velocity would be so big that entity could move too far.
 # Recommended value: 0.2 ~ 0.4
 velocity-modifier-double: 0.3

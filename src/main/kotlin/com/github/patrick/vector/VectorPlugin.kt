@@ -28,6 +28,8 @@ import org.bukkit.Bukkit.broadcastMessage
 import org.bukkit.Bukkit.getScheduler
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.Material.AIR
+import org.bukkit.Material.getMaterial
 import org.bukkit.Particle.REDSTONE
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
@@ -48,17 +50,32 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import kotlin.random.Random.Default.nextDouble
+import kotlin.streams.toList
 
 class VectorPlugin : JavaPlugin(), Listener {
     private var status = false
     private val selectedEntities = HashMap<Player, Entity>()
 
     private var lastModified: Long? = null
+    private var vectorItem = AIR
     private var bothHands = false
     private var singleTime = false
     private var visibilityLength = 0.0
     private var velocityModifier = 0.0
     private var maxVelocity = 0.0
+
+    private fun CommandSender.requireMessage(message: String) = sendMessage("Required: $message")
+
+    private fun CommandSender.unrecognizedMessage(message: String, value: String) =
+        sendMessage("Unrecognized $message: '$value'")
+
+    private fun String.resetRegexMatch(): Boolean = contains(Regex("(?i)conf|set"))
+
+    private fun List<String>.filter(key: String) = filter { it.startsWith(key, true) }
+
+    private fun getKeys() = config.getKeys(false).toList()
+
+    private fun newRandom(): Double = nextDouble(255.0)
 
     private fun statusOn(): Boolean {
         status = true
@@ -76,10 +93,6 @@ class VectorPlugin : JavaPlugin(), Listener {
         return true
     }
 
-    private fun CommandSender.requireMessage(message: String) = sendMessage("Required: $message")
-
-    private fun CommandSender.unrecognizedMessage(message: String, value: String) = sendMessage("Unrecognized $message: '$value'")
-
     private fun Player.getTarget(): Location {
         val loc = eyeLocation.clone()
         val view = loc.clone().add(loc.clone().direction.normalize().multiply(visibilityLength))
@@ -91,9 +104,54 @@ class VectorPlugin : JavaPlugin(), Listener {
         }
     }
 
-    private fun String.resetRegexMatch(): Boolean = contains(Regex("(?i)conf|set"))
+    private fun sendHelp(sender: CommandSender) {
+        sender.sendMessage("===== Command <vector> =====\n" +
+                "/vector -> Toggles vector feature\n" +
+                "/vector help -> Shows vector help\n" +
+                "/vector config <key|reset> [value] -> Updates plugin.yml\n\n\n")
+    }
 
-    private fun getKeys() = config.getKeys(false)
+    private fun getCurrentConfig(args: Array<out String>, sender: CommandSender) {
+        try {
+            val path = File(dataFolder, "config.yml").toPath()
+            val lines = Files.readAllLines(path, UTF_8)
+
+            for (i in 0 until lines.count())
+                if (lines[i].contains(args[1]))
+                    sender.sendMessage("\n \n \n" +
+                            "${lines[i - 3].substring(2)}\n" +
+                            "${lines[i - 2].substring(2)}\n" +
+                            "${lines[i - 1].substring(2)}\n \n" +
+                            "Current ${args[1]}: ${config.get(args[1])}\n")
+        } catch (e: IOException) { logger.info("Cannot read/write to config.yml") }
+    }
+
+    private fun setConfig(args: Array<out String>, sender: CommandSender): Boolean {
+        try {
+            val path = File(dataFolder, "config.yml").toPath()
+            val lines = Files.readAllLines(path, UTF_8)
+            for (i in 0 until lines.count()) {
+                if (lines[i].contains(args[1])) when {
+                    args[1].contains("double") -> lines[i] = "${args[1]}: ${args[2].toDouble()}"
+                    args[1].contains("item") -> {
+                        getMaterial(args[2].toUpperCase())?: sender.unrecognizedMessage("key", args[2])
+                        lines[i] = "${args[1]}: ${args[2].toUpperCase()}"
+                    }
+                    args[2].contains("true", true) -> lines[i] = "${args[1]}: true"
+                    args[2].contains("false", true) -> lines[i] = "${args[1]}: false"
+                    else -> sender.unrecognizedMessage("value", args[2])
+                }
+            }
+            Files.write(path, lines, UTF_8)
+            return true
+        } catch (e: Exception) {
+            when (e) {
+                is IOException -> logger.info("Cannot read/write to config.yml")
+                is NumberFormatException -> sender.unrecognizedMessage("value", args[2])
+            }
+            return true
+        }
+    }
 
     private fun setTargetVelocity(player: Player, remove: Boolean): Boolean? {
         selectedEntities[player]?.let {
@@ -132,14 +190,13 @@ class VectorPlugin : JavaPlugin(), Listener {
         else it.key.let { player ->
             player.getTarget().let { target ->
                 for (i in 0 until pos.distance(target).times(5).toInt()) {
-                    val loc = pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
+                    val loc =
+                        pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
                     pos.world.spawnParticle(REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
                 }
             }
         }
     }
-
-    private fun newRandom(): Double = nextDouble(255.0)
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -149,6 +206,7 @@ class VectorPlugin : JavaPlugin(), Listener {
             if (last != lastModified) {
                 lastModified = last
                 reloadConfig()
+                vectorItem = getMaterial(config.getString("vector-item"))
                 bothHands = config.getBoolean("use-both-hands")
                 singleTime = config.getBoolean("set-single-time")
                 visibilityLength = config.getDouble("visibility-length-double")
@@ -158,61 +216,47 @@ class VectorPlugin : JavaPlugin(), Listener {
         }, 0, 1)
     }
 
-    @Throws(IOException::class, NumberFormatException::class)
     override fun onCommand(sender: CommandSender, command: Command?, label: String?, args: Array<out String>): Boolean {
         if (args.isNotEmpty()) {
+            if (args[0].contains("help", true)) sendHelp(sender).also { return true }
+            if (!sender.hasPermission("command.vector.config"))
+                sender.sendMessage("No Permission").also { return true }
             if (args[0].resetRegexMatch()) {
                 when (args.size) {
-                    1 -> sender.requireMessage("key, value").also { return false }
+                    1 -> sender.requireMessage("key, value").also { return true }
                     2 -> {
                         if (args[1].contains("reset", true)) {
                             File(dataFolder, "config.yml").delete()
                             saveDefaultConfig()
                             return true
                         }
-                        if (config.getKeys(false).contains(args[1])) sender.requireMessage("value").also { return true }
+                        if (config.getKeys(false).contains(args[1]))
+                            getCurrentConfig(args, sender).also { return true }
                         sender.unrecognizedMessage("key", args[1])
+                        return true
                     }
                     3 -> {
-                        if (config.getKeys(false).contains(args[1])) {
-                            try {
-                                val path = File(dataFolder, "config.yml").toPath()
-                                val lines = Files.readAllLines(path, UTF_8)
-                                for (i in 0 until lines.count()) {
-                                    if (lines[i].contains(args[1])) when {
-                                        args[1].contains("double") -> lines[i] = "${args[1]}: ${args[2].toDouble()}"
-                                        args[2].contains("true", true) -> lines[i] = "${args[1]}: true"
-                                        args[2].contains("false", true) -> lines[i] = "${args[1]}: false"
-                                        else -> sender.unrecognizedMessage("value", args[2])
-                                    }
-                                }
-                                Files.write(path, lines, UTF_8)
-                                return true
-                            } catch (e: Exception) {
-                                when (e) {
-                                    is IOException -> logger.info("Cannot read/write to config.yml")
-                                    is NumberFormatException -> sender.unrecognizedMessage("value", args[2])
-                                    else -> throw e
-                                }
-                                return false
-                            }
-                        }
+                        if (config.getKeys(false).contains(args[1])) return setConfig(args, sender)
+                        sender.unrecognizedMessage("key", args[1])
+                        return true
                     }
                 }
             }
             sender.unrecognizedMessage("args", args[0])
-            return false
+            return true
         }
+        if (!sender.hasPermission("command.vector.use")) sender.sendMessage("No Permission").also { return true }
         return if (!status) statusOn() else statusOff()
     }
 
     override fun onTabComplete(sender: CommandSender?, command: Command?, alias: String?, args: Array<out String>) =
         when (args.size) {
-            1 -> setOf("config").filter { it.startsWith(args[0], true) }
-            2 -> if (args[0].resetRegexMatch()) getKeys().filter { it.startsWith(args[1], true) } else emptyList()
+            1 -> listOf("config", "help").filter(args[0])
+            2 -> if (args[0].resetRegexMatch()) getKeys().filter(args[1]) else emptyList()
             3 -> if (args[0].resetRegexMatch() && getKeys().contains(args[1])) {
-                if (!args[1].contains("double", true))
-                    setOf("true", "false").filter { it.startsWith(args[2], true) }
+                if (args[1].contains("item", true))
+                    Material.values().toList().stream().map(Material::name).toList().filter(args[2])
+                else if (!args[1].contains("double", true)) listOf("true", "false").filter(args[2])
                 else emptyList()
             } else emptyList()
             else -> emptyList()
@@ -222,12 +266,13 @@ class VectorPlugin : JavaPlugin(), Listener {
     fun onInteract(event: PlayerInteractEvent) {
         val player = event.player
         val action = event.action
-        if (event.item?.type == Material.BLAZE_ROD && player.hasPermission("command.vector.use")) {
+        if (event.item?.type == vectorItem && player.hasPermission("command.vector.use")) {
             if (setOf(RIGHT_CLICK_AIR, RIGHT_CLICK_BLOCK).contains(action)) {
                 if (!bothHands) setTargetVelocity(player, singleTime) ?: newRayTrace(player)
                 else newRayTrace(player)
             }
-            if (setOf(LEFT_CLICK_AIR, LEFT_CLICK_BLOCK).contains(action) && bothHands) setTargetVelocity(player,singleTime)
+            if (setOf(LEFT_CLICK_AIR, LEFT_CLICK_BLOCK).contains(action) && bothHands)
+                setTargetVelocity(player,singleTime)
             event.isCancelled = true
         }
     }

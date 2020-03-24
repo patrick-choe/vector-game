@@ -1,5 +1,5 @@
 name: VectorGame
-version: 0.6.2-beta
+version: 0.7-beta
 description: A vector game for education
 api-version: "1.12"
 load: POSTWORLD
@@ -25,9 +25,11 @@ permissions:
     default: op
     children:
       command.vector.toggle: true
+      command.vector.config: true
       command.vector.use: true
     command.vector.toggle: &command
       default: op
       children:
         command.vector: true
+    command.vector.config: *command
     command.vector.use: *command

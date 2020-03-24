@@ -1,12 +1,12 @@
 plugins {
     `maven-publish`
     signing
-    kotlin("jvm") version "1.3.70"
+    kotlin("jvm") version "1.3.71"
     id("org.jetbrains.dokka") version "0.10.0"
 }
 
 group = "com.github.patrick-mc"
-version = "0.6.2-beta"
+version = "0.7-beta"
 
 repositories {
     maven("https://repo.maven.apache.org/maven2/")
