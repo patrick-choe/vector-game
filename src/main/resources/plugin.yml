@@ -1,7 +1,6 @@
 name: VectorGame
-version: 1.0.3
+version: 1.0.4
 description: A vector game for education
-api-version: "1.12"
 load: POSTWORLD
 authors: [PatrickKR, Nemo]
 website: https://github.com/patrick-mc

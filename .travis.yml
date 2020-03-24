@@ -1,37 +1,13 @@
 language: java
 
-os:
-  - linux
-  - osx
+os: linux
 
 dist: xenial
-
-osx_image:
-  - xcode6.4
-  - xcode7.3
-  - xcode8
-  - xcode8.3
-  - xcode9
-  - xcode9.1
-  - xcode9.2
-  - xcode9.3
-  - xcode9.4
-  - xcode10
-  - xcode10.1
-  - xcode10.2
-  - xcode10.3
-  - xcode11
-  - xcode11.1
-  - xcode11.2
-  - xcode11.3
 
 jdk:
   - openjdk8
   - openjdk10
   - openjdk11
-
-before_script:
-  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
 
 before_install:
   - chmod +x ./gradlew
