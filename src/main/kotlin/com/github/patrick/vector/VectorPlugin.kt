@@ -43,7 +43,6 @@ import org.bukkit.event.block.Action.LEFT_CLICK_BLOCK
 import org.bukkit.event.block.Action.RIGHT_CLICK_AIR
 import org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK
 import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.permissions.Permissible
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
@@ -82,18 +81,7 @@ class VectorPlugin : JavaPlugin(), Listener {
     private fun statusOn() {
         status = true
         registerEvents(this, this)
-        getScheduler().runTaskTimer(this, { selectedEntities.forEach {
-            val pos = it.value.location.clone()
-            if (!it.key.isValid || !it.value.isValid) selectedEntities.remove(it.key)
-            else it.key.let { player ->
-                player.getTarget().let { target ->
-                    for (i in 0 until pos.distance(target).times(5).toInt()) {
-                        val loc =
-                            pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
-                        pos.world.spawnParticle(REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
-                    }
-                }
-            } } }, 0, 1)
+        getScheduler().runTaskTimer(this, { selectedEntities.forEach { newParticle(it) } }, 0, 1)
         broadcastMessage("Vector On")
     }
 
@@ -173,6 +161,20 @@ class VectorPlugin : JavaPlugin(), Listener {
             when (e) {
                 is IOException -> logger.info("Cannot read/write to config.yml")
                 is NumberFormatException -> sender.unrecognizedMessage("value", args[2])
+            }
+        }
+    }
+
+    private fun newParticle(entry: Map.Entry<Player, Entity>) {
+        val pos = entry.value.location.clone()
+        if (!entry.key.isValid || !entry.value.isValid) selectedEntities.remove(entry.key)
+        else entry.key.let { player ->
+            player.getTarget().let { target ->
+                for (i in 0 until pos.distance(target).times(5).toInt()) {
+                    val loc =
+                        pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
+                    pos.world.spawnParticle(REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
+                }
             }
         }
     }
@@ -262,7 +264,4 @@ class VectorPlugin : JavaPlugin(), Listener {
             event.isCancelled = true
         }
     }
-
-    @EventHandler
-    fun onQuit(event: PlayerQuitEvent) = selectedEntities.remove(event.player)
 }
