@@ -129,7 +129,7 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
 
     /**
      * This method gets current config by given arguments.  If not
-     * successful, it will alert [CommandSender] why it was unsuccessful.
+     * successful, it will alert sender why it was unsuccessful.
      *
      * @param   args    arguments of the command
      * @param   sender  command sender of the command
@@ -149,7 +149,7 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
 
     /**
      * This method sets config by given arguments.  If not successful, it
-     * will alert [CommandSender] why it was unsuccessful.
+     * will alert sender why it was unsuccessful.
      *
      * @param   args    arguments of the command
      * @param   sender  command sender of the command
@@ -194,7 +194,7 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
     private fun List<String>.filter(key: String) = filter { it.startsWith(key, true) }
 
     /**
-     * This method sends [CommandSender] an alert saying that the message
+     * This method sends sender an alert saying that the message
      * cannot be recognized by the server.
      *
      * @param   type the type that can't be recognized
