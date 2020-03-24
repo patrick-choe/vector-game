@@ -35,22 +35,34 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import kotlin.streams.toList
 
+/**
+ * This class manages vector commands for this plugin.
+ * When the command starting with '/vector' is called,
+ * this class handles the command.
+ */
 class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCompleter {
     private var status = false
-
     private val dataFolder = instance.dataFolder
     private val config = instance.config
     private val logger = instance.logger
 
+    /**
+     * When the command starting with '/vector' is executed,
+     * below codes are executed.
+     */
     override fun onCommand(sender: CommandSender, command: Command?, label: String?, args: Array<out String>): Boolean {
         if (args.isNotEmpty()) when {
-            args[0].contains("help", true) -> sendHelp(sender)
+            args[0].contains("help", true) -> sender.sendHelp()
             args[0].resetRegexMatch() && sender.hasPermission("command.vector.config") -> configCommand(args, sender)
             else -> sender.unrecognizedMessage("args", args[0])
         } else if (sender.hasPermission("command.vector.toggle")) if (!status) statusOn() else statusOff()
         return true
     }
 
+    /**
+     * When the players use 'tab' key to get suggestion,
+     * below codes are executed.
+     */
     override fun onTabComplete(sender: CommandSender?, command: Command?, alias: String?, args: Array<out String>) =
         when (args.size) {
             1 -> listOf("config", "help").filter(args[0])
@@ -64,6 +76,9 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
             else -> emptyList()
         }
 
+    /**
+     * This private method registers listener and task for this plugin
+     */
     private fun statusOn() {
         status = true
         ASMEventExecutor.registerEvents(VectorEventListener(), instance)
@@ -71,6 +86,9 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
         Bukkit.broadcastMessage("Vector On")
     }
 
+    /**
+     * This private method unregisters listener and task for this plugin
+     */
     private fun statusOff() {
         status = false
         HandlerList.unregisterAll(instance as JavaPlugin)
@@ -78,12 +96,21 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
         Bukkit.broadcastMessage("Vector Off")
     }
 
-    private fun sendHelp(sender: CommandSender) = sender.sendMessage("\n \n \n" +
+    /**
+     * This private method sends helpful information to command sender
+     */
+    private fun CommandSender.sendHelp() = sendMessage("\n \n \n" +
             "===== Command <vector> =====\n" +
             "/vector -> Toggles vector feature\n" +
             "/vector help -> Shows vector help\n" +
             "/vector config <key|reset> [value] -> Updates plugin.yml\n")
 
+    /**
+     * This private method handles config-related commands
+     *
+     * @param   args    arguments from the command
+     * @param   sender  command sender from the command
+     */
     private fun configCommand(args: Array<out String>, sender: CommandSender) = when (args.size) {
         1 -> sender.sendMessage("Required: key, value")
         2 -> when {
@@ -100,6 +127,13 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
         } else -> sender.unrecognizedMessage("args", args.drop(3).toString())
     }
 
+    /**
+     * This method gets current config by given arguments.  If not
+     * successful, it will alert [CommandSender] why it was unsuccessful.
+     *
+     * @param   args    arguments of the command
+     * @param   sender  command sender of the command
+     */
     private fun getCurrentConfig(args: Array<out String>, sender: CommandSender) = try {
         val path = File(dataFolder, "config.yml").toPath()
         val lines = Files.readAllLines(path, UTF_8)
@@ -113,6 +147,13 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
                         "Current ${args[1]}: ${config.get(args[1])}\n")
     } catch (e: IOException) { logger.info("Cannot read/write to config.yml") }
 
+    /**
+     * This method sets config by given arguments.  If not successful, it
+     * will alert [CommandSender] why it was unsuccessful.
+     *
+     * @param   args    arguments of the command
+     * @param   sender  command sender of the command
+     */
     private fun setConfig(args: Array<out String>, sender: CommandSender) {
         try {
             val path = File(dataFolder, "config.yml").toPath()
@@ -139,12 +180,33 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
         }
     }
 
+    /**
+     * This method returns true if the [String] contains "conf" or "set"
+     */
     private fun String.resetRegexMatch() = contains(Regex("(?i)conf|set"))
 
+    /**
+     * This method filters [List] of [String] by whether each [String] starts with 'key'
+     *
+     * @param   key the key [String] to filter with
+     * @return  [List] of [String] after filtering
+     */
     private fun List<String>.filter(key: String) = filter { it.startsWith(key, true) }
 
-    private fun CommandSender.unrecognizedMessage(message: String, value: String) =
-        sendMessage("Unrecognized $message: '$value'")
+    /**
+     * This method sends [CommandSender] an alert saying that the message
+     * cannot be recognized by the server.
+     *
+     * @param   type the type that can't be recognized
+     * @param   value   the message value that can't be recognized
+     */
+    private fun CommandSender.unrecognizedMessage(type: String, value: String) =
+        sendMessage("Unrecognized $type: '$value'")
 
+    /**
+     * This method gets keys from 'config.yml'
+     *
+     * @return  [List] of [String] containing keys
+     */
     private fun getKeys() = config.getKeys(false).toList()
 }

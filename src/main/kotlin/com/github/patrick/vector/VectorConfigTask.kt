@@ -30,11 +30,20 @@ import com.github.patrick.vector.VectorPlugin.Companion.visibilityLength
 import org.bukkit.Material.getMaterial
 import java.io.File
 
+/**
+ * This class manages the configuration file of this plugin.
+ * When the change of 'plugin.yml' is detected, this task will change the
+ * variables' values into the new one.
+ */
 class VectorConfigTask(private val instance: VectorPlugin) : Runnable {
+    /**
+     * This overridden method will run from the enabled moment to the
+     * disabled moment.
+     */
     override fun run() {
         val last = File(instance.dataFolder, "config.yml").lastModified()
         val config = instance.config
-        if (last != VectorPlugin.lastModified) {
+        if (last != lastModified) {
             lastModified = last
             instance.reloadConfig()
             vectorItem = getMaterial(config.getString("vector-item"))

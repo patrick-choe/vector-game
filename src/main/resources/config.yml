@@ -16,7 +16,7 @@ use-both-hands: false
 # If false, players can set velocity multiple times until selecting new entity.
 set-single-time: true
 
-# Sets players' visibility length when selecting entities
+# Sets players' visibility length when selecting entities and setting velocities.
 # Put double value to modify visibility length.
 # Recommended value: 4.0 ~
 visibility-length-double: 5.0

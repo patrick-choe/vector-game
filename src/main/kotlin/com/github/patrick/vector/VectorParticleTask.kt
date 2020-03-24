@@ -25,7 +25,16 @@ import com.github.patrick.vector.VectorPlugin.Companion.selectedEntities
 import org.bukkit.Particle
 import kotlin.random.Random
 
+/**
+ * This class manages the particle effect of this plugin.
+ * When the player has a selected entity, this task will spawn the
+ * particle between the player's eye target and the entity.
+ */
 class VectorParticleTask : Runnable {
+    /**
+     * This overridden method will run if the vector plugin's status
+     * is on (true).
+     */
     override fun run() {
         selectedEntities.forEach {
             val pos = it.value.location.clone()
@@ -42,5 +51,11 @@ class VectorParticleTask : Runnable {
         }
     }
 
-    private fun newRandom(): Double = Random.nextDouble(255.0)
+    /**
+     * This method creates a random number between 0 and 255,
+     * which would make the particle have a random RGB.
+     *
+     * @return  a random [Double] value.
+     */
+    private fun newRandom(): Double = Random.nextInt(0, 255).toDouble()
 }
