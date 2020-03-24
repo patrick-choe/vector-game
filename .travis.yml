@@ -1,9 +1,9 @@
 language: java
 
 os:
-  - windows
   - linux
   - osx
+
 dist: xenial
 
 osx_image:
@@ -32,12 +32,6 @@ jdk:
 
 before_script:
   - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
-
-jobs:
-  allow_failures:
-    - os:
-      - osx
-      - windows
 
 before_install:
   - chmod +x ./gradlew
