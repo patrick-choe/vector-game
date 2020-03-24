@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.patrick-mc"
-version = "0.6.1-beta"
+version = "0.6.2-beta"
 
 repositories {
     maven("https://repo.maven.apache.org/maven2/")
@@ -60,49 +60,49 @@ try {
                 repositories {
                     mavenLocal()
 
-                maven {
-                    name = "central"
+                    maven {
+                        name = "central"
 
-                    credentials {
-                        username = project.property("centralUsername").toString()
-                        password = project.property("centralPassword").toString()
-                    }
+                        credentials {
+                            username = project.property("centralUsername").toString()
+                            password = project.property("centralPassword").toString()
+                        }
 
-                    val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-                    val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots/")
-                    url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-                }
-            }
-
-            pom {
-                name.set("vector-game")
-                description.set("A vector game for education")
-                url.set("https://github.com/patrick-mc/vector-game")
-
-                licenses {
-                    license {
-                        name.set("GNU General Public License v2.0")
-                        url.set("https://opensource.org/licenses/gpl-2.0.php")
+                        val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                        val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+                        url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
                     }
                 }
 
-                developers {
-                    developer {
-                        id.set("patrick-mc")
-                        name.set("PatrickKR")
-                        email.set("mailpatrickkorea@gmail.com")
-                        url.set("https://github.com/patrick-mc")
-                        roles.addAll("developer")
-                        timezone.set("Asia/Seoul")
-                    }
-                }
-
-                scm {
-                    connection.set("scm:git:git://github.com/patrick-mc/vector-game.git")
-                    developerConnection.set("scm:git:ssh://github.com:patrick-mc/vector-game.git")
+                pom {
+                    name.set("vector-game")
+                    description.set("A vector game for education")
                     url.set("https://github.com/patrick-mc/vector-game")
+
+                    licenses {
+                        license {
+                            name.set("GNU General Public License v2.0")
+                            url.set("https://opensource.org/licenses/gpl-2.0.php")
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id.set("patrick-mc")
+                            name.set("PatrickKR")
+                            email.set("mailpatrickkorea@gmail.com")
+                            url.set("https://github.com/patrick-mc")
+                            roles.addAll("developer")
+                            timezone.set("Asia/Seoul")
+                        }
+                    }
+
+                    scm {
+                        connection.set("scm:git:git://github.com/patrick-mc/vector-game.git")
+                        developerConnection.set("scm:git:ssh://github.com:patrick-mc/vector-game.git")
+                        url.set("https://github.com/patrick-mc/vector-game")
+                    }
                 }
-            }
             }
         }
     }

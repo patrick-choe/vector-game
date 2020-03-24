@@ -28,6 +28,8 @@
 > #### How to use
 > - Use '/vector' to toggle vector functions
 > - Command alias: '/vc', '/vec', '/vctr', '/벡터'
+> - Use '/vector config <config-name> <config-value> to change config.yml'
+> - Use '/vector config reset' to reset config.yml
 
 > #### Gradle (Groovy)
 >```groovy
@@ -41,7 +43,7 @@
 >
 >...
 >dependencies {
->    implementation 'com.github.patrick-mc:vector-game:0.6.1-beta'
+>    implementation 'com.github.patrick-mc:vector-game:0.6.2-beta'
 >}
 >```
 
@@ -56,6 +58,6 @@
 >
 >...
 >dependencies {
->    implementation("com.github.patrick-mc:vector-game:0.6.1-beta")
+>    implementation("com.github.patrick-mc:vector-game:0.6.2-beta")
 >}
 >```
