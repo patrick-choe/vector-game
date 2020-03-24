@@ -66,8 +66,6 @@ class VectorPlugin : JavaPlugin(), Listener {
     private var velocityModifier = 0.0
     private var maxVelocity = 0.0
 
-    private fun CommandSender.requireMessage(message: String) = sendMessage("Required: $message")
-
     private fun CommandSender.unrecognizedMessage(message: String, value: String) =
         sendMessage("Unrecognized $message: '$value'")
 
@@ -84,7 +82,18 @@ class VectorPlugin : JavaPlugin(), Listener {
     private fun statusOn() {
         status = true
         registerEvents(this, this)
-        getScheduler().runTaskTimer(this, { selectedEntities.forEach { newParticle(it) } }, 0, 1)
+        getScheduler().runTaskTimer(this, { selectedEntities.forEach {
+            val pos = it.value.location.clone()
+            if (!it.key.isValid || !it.value.isValid) selectedEntities.remove(it.key)
+            else it.key.let { player ->
+                player.getTarget().let { target ->
+                    for (i in 0 until pos.distance(target).times(5).toInt()) {
+                        val loc =
+                            pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
+                        pos.world.spawnParticle(REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
+                    }
+                }
+            } } }, 0, 1)
         broadcastMessage("Vector On")
     }
 
@@ -104,6 +113,22 @@ class VectorPlugin : JavaPlugin(), Listener {
         block.blockPoint.let {
             return loc.world.getBlockAt(it.x, it.y, it.z).getRelative(block.face).location.add(0.5, 0.5, 0.5)
         }
+    }
+
+    private fun configCommand(args: Array<out String>, sender: CommandSender) = when (args.size) {
+        1 -> sender.sendMessage("Required: key, value")
+        2 -> when {
+            args[1].contains("reset", true) -> {
+                File(dataFolder, "config.yml").delete()
+                saveDefaultConfig()
+            }
+            getKeys().contains(args[1]) -> getCurrentConfig(args, sender)
+            else -> sender.unrecognizedMessage("key", args[1])
+        }
+        3 -> when {
+            getKeys().contains(args[1]) -> setConfig(args, sender)
+            else -> sender.unrecognizedMessage("Unrecognized key", args[1])
+        } else -> sender.unrecognizedMessage("args", args.drop(3).toString())
     }
 
     private fun sendHelp(sender: CommandSender) {
@@ -183,20 +208,6 @@ class VectorPlugin : JavaPlugin(), Listener {
         found?.let { selectedEntities[player] = it }
     }
 
-    private fun newParticle(it: Map.Entry<Player, Entity>) {
-        val pos = it.value.location.clone()
-        if (!it.key.isValid || !it.value.isValid) selectedEntities.remove(it.key)
-        else it.key.let { player ->
-            player.getTarget().let { target ->
-                for (i in 0 until pos.distance(target).times(5).toInt()) {
-                    val loc =
-                        pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
-                    pos.world.spawnParticle(REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
-                }
-            }
-        }
-    }
-
     override fun onEnable() {
         saveDefaultConfig()
         getScheduler().runTaskTimer(this, {
@@ -218,20 +229,8 @@ class VectorPlugin : JavaPlugin(), Listener {
     override fun onCommand(sender: CommandSender, command: Command?, label: String?, args: Array<out String>): Boolean {
         if (args.isNotEmpty()) when {
             args[0].contains("help", true) -> sendHelp(sender)
-            args[0].resetRegexMatch() && sender.perm("command.vector.config") -> when (args.size) {
-                1 -> sender.requireMessage("key, value")
-                2 -> when {
-                    args[1].contains("reset", true) -> {
-                        File(dataFolder, "config.yml").delete()
-                        saveDefaultConfig()
-                    }
-                    config.getKeys(false).contains(args[1]) -> getCurrentConfig(args, sender)
-                    else -> sender.unrecognizedMessage("key", args[1])
-                } 3 -> when {
-                    config.getKeys(false).contains(args[1]) -> setConfig(args, sender)
-                    else -> sender.unrecognizedMessage("key", args[1])
-                } else -> sender.unrecognizedMessage("args", args.drop(3).toString())
-            } else -> sender.unrecognizedMessage("args", args[0])
+            args[0].resetRegexMatch() && sender.perm("command.vector.config") -> configCommand(args, sender)
+            else -> sender.unrecognizedMessage("args", args[0])
         } else if (sender.perm("command.vector.toggle")) if (!status) statusOn() else statusOff()
         return true
     }
