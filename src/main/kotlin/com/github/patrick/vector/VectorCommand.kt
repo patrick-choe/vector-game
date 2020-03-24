@@ -118,7 +118,7 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
             val path = File(dataFolder, "config.yml").toPath()
             val lines = Files.readAllLines(path, UTF_8)
             for (i in 0 until lines.count()) {
-                if (lines[i].contains(args[1])) when {
+                if (lines[i].contains(args[1])) { when {
                     args[1].contains("double") -> lines[i] = "${args[1]}: ${args[2].toDouble()}"
                     args[1].contains("item") -> {
                         Material.getMaterial(args[2].toUpperCase()) ?: sender.unrecognizedMessage("key", args[2])
@@ -127,7 +127,8 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
                     args[2].matches(Regex("true|false")) -> lines[i] = "${args[1]}: ${args[2]}"
                     else -> sender.unrecognizedMessage("value", args[2]).also { return }
                 }
-                sender.sendMessage(lines[i])
+                    sender.sendMessage(lines[i])
+                }
             }
             Files.write(path, lines, UTF_8)
         } catch (e: Exception) {
