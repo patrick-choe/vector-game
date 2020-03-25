@@ -20,10 +20,10 @@
 
 package com.github.patrick.vector
 
-import com.github.patrick.vector.VectorPlugin.Companion.getTarget
 import com.github.patrick.vector.VectorPlugin.Companion.selectedEntities
+import com.github.patrick.vector.VectorUtils.getTarget
+import com.github.patrick.vector.VectorUtils.newRandom
 import org.bukkit.Particle
-import kotlin.random.Random
 
 /**
  * This class manages the particle effect of this plugin.
@@ -39,23 +39,13 @@ class VectorParticleTask : Runnable {
         selectedEntities.forEach {
             val pos = it.value.location.clone()
             if (!it.key.isValid || !it.value.isValid) selectedEntities.remove(it.key)
-            else it.key.let { player ->
-                player.getTarget().let { target ->
-                    for (i in 0 until pos.distance(target).times(5).toInt()) {
-                        val loc =
-                            pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
-                        pos.world.spawnParticle(Particle.REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
-                    }
+            else it.key.getTarget().let { target ->
+                for (i in 0 until pos.distance(target).times(5).toInt()) {
+                    val loc =
+                        pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
+                    pos.world.spawnParticle(Particle.REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
                 }
             }
         }
     }
-
-    /**
-     * This method creates a random number between 0 and 255,
-     * which would make the particle have a random RGB.
-     *
-     * @return  a random [Double] value.
-     */
-    private fun newRandom(): Double = Random.nextInt(0, 255).toDouble()
 }

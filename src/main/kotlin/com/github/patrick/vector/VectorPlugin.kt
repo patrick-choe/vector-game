@@ -20,10 +20,7 @@
 
 package com.github.patrick.vector
 
-import com.github.noonmaru.math.Vector
-import com.github.noonmaru.tap.Tap.MATH
 import org.bukkit.Bukkit.getScheduler
-import org.bukkit.Location
 import org.bukkit.Material.AIR
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
@@ -35,12 +32,10 @@ import org.bukkit.plugin.java.JavaPlugin
  */
 class VectorPlugin : JavaPlugin() {
     /**
-     * This companion object saves project-wide variables and methods.
+     * This companion object saves project-wide variables.
      */
     companion object {
-        /**
-         * This [HashMap] saves the player, and the corresponding selected entity
-         */
+        lateinit var instance: VectorPlugin
         val selectedEntities = HashMap<Player, Entity>()
         var lastModified: Long? = null
         var vectorItem = AIR
@@ -49,24 +44,6 @@ class VectorPlugin : JavaPlugin() {
         var visibilityLength = 0.0
         var velocityModifier = 0.0
         var maxVelocity = 0.0
-
-        /**
-         * This method returns the player's eye target, multiplied by visibility length
-         * set on 'plugin.yml'.  If the target matches a block, it returns a location
-         * in front of the matched block.
-         *
-         * @return  player's eye target location
-         */
-        fun Player.getTarget(): Location {
-            val loc = eyeLocation.clone()
-            val view = loc.clone().add(loc.clone().direction.normalize().multiply(visibilityLength))
-            val block =
-                MATH.rayTraceBlock(loc.world, Vector(loc.x, loc.y, loc.z), Vector(view.x, view.y, view.z), 0)
-                    ?: return loc.clone().add(eyeLocation.direction.clone().normalize().multiply(visibilityLength))
-            block.blockPoint.let {
-                return loc.world.getBlockAt(it.x, it.y, it.z).getRelative(block.face).location.add(0.5, 0.5, 0.5)
-            }
-        }
     }
 
     /**
@@ -75,6 +52,7 @@ class VectorPlugin : JavaPlugin() {
      * for '/vector' command, and registers 'VectorConfigTask'.
      */
     override fun onEnable() {
+        instance = this
         saveDefaultConfig()
         getCommand("vector").executor = VectorCommand(this)
         getCommand("vector").tabCompleter = VectorCommand(this)
