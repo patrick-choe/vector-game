@@ -7,15 +7,9 @@
 
 [![GitHub License](https://img.shields.io/github/license/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/blob/master/LICENSE)
 [![GitHub Repository Size](https://img.shields.io/github/repo-size/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game)
-[![GitHub Commit Activity](https://img.shields.io/github/commit-activity/w/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/commits)
 [![GitHub Last Commit](https://img.shields.io/github/last-commit/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/commits)
 [![GitHub Release Date](https://img.shields.io/github/release-date/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/releases)
 [![GitHub Latest Release](https://img.shields.io/github/v/release/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/releases)
-[![GitHub Downloads](https://img.shields.io/github/downloads/patrick-mc/vector-game/total)](https://github.com/patrick-mc/vector-game/releases)
-[![GitHub Issues](https://img.shields.io/github/issues-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/issues?q=is%3Aissue+is%3Aopen)
-[![GitHub Closed Issues](https://img.shields.io/github/issues-closed-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/issues?q=is%3Aissue+is%3Aclosed)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/pulls?q=is%3Apr+is%3Aopen)
-[![GitHub Closed Pull Requests](https://img.shields.io/github/issues-pr-closed-raw/patrick-mc/vector-game)](https://github.com/patrick-mc/vector-game/pulls?q=is%3Apr+is%3Aclosed)
 
 > A vector game for education
 
