@@ -52,8 +52,8 @@ object VectorUtils {
      * closest entity to the player.
      */
     fun Player.newEntityRayTrace() {
-        val loc = this.eyeLocation
-        val view = loc.clone().add(loc.clone().direction.normalize().multiply(visibilityLength))
+        val loc = getTargetMapping().key
+        val view = getTargetMapping().value
         var found: Entity? = null
         var distance = 0.0
 
@@ -79,8 +79,8 @@ object VectorUtils {
      * @return  player's eye target location
      */
     fun Player.getTarget(): Location {
-        val loc = eyeLocation.clone()
-        val view = loc.clone().add(loc.clone().direction.normalize().multiply(visibilityLength))
+        val loc = getTargetMapping().key
+        val view = getTargetMapping().value
         val block =
             MATH.rayTraceBlock(loc.world, Vector(loc.x, loc.y, loc.z), Vector(view.x, view.y, view.z), 0)
                 ?: return loc.clone().add(eyeLocation.direction.clone().normalize().multiply(visibilityLength))
@@ -173,4 +173,7 @@ object VectorUtils {
             }
         }
     }
+
+    private fun Player.getTargetMapping() =
+        mapOf(eyeLocation.clone() to eyeLocation.clone().add(eyeLocation.clone().direction.normalize().multiply(visibilityLength))).entries.first()
 }
