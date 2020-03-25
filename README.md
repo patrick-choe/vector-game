@@ -1,5 +1,6 @@
 # Vector Game
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/99aee4fe51d64407a4f7eefe869d4250)](https://app.codacy.com/manual/jehyeokchoe/vector-game?utm_source=github.com&utm_medium=referral&utm_content=patrick-mc/vector-game&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.org/patrick-mc/vector-game.svg?branch=master)](https://travis-ci.com/patrick-mc/vector-game)
 [![Maintainability](https://api.codeclimate.com/v1/badges/b17b137a6f59132279ba/maintainability)](https://codeclimate.com/github/patrick-mc/vector-game/maintainability)
 [![JitPack - Version](https://jitpack.io/v/patrick-mc/vector-game.svg)](https://jitpack.io/#patrick-mc/vector-game)
