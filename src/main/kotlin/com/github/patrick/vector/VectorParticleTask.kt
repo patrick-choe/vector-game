@@ -22,8 +22,8 @@ package com.github.patrick.vector
 
 import com.github.patrick.vector.VectorPlugin.Companion.selectedEntities
 import com.github.patrick.vector.VectorUtils.getTarget
-import com.github.patrick.vector.VectorUtils.newRandom
-import org.bukkit.Particle
+import org.bukkit.Particle.REDSTONE
+import kotlin.random.Random.Default.nextInt
 
 /**
  * This class manages the particle effect of this plugin.
@@ -39,13 +39,14 @@ class VectorParticleTask : Runnable {
         selectedEntities.forEach {
             val pos = it.value.location.clone()
             if (!it.key.isValid || !it.value.isValid) selectedEntities.remove(it.key)
-            else it.key.getTarget().let { target ->
-                for (i in 0 until pos.distance(target).times(5).toInt()) {
-                    val loc =
-                        pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
-                    pos.world.spawnParticle(Particle.REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
-                }
+            val target = it.key.getTarget()
+            for (i in 0 until pos.distance(target).times(5).toInt()) {
+                val loc =
+                    pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
+                pos.world.spawnParticle(REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
             }
         }
     }
+
+    private fun newRandom() = nextInt(0, 255).toDouble()
 }

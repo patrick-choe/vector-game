@@ -18,8 +18,11 @@ import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import kotlin.random.Random.Default.nextInt
 
+/**
+ * This object contains multiple methods used throughout
+ * this plugin.
+ */
 object VectorUtils {
     private val dataFolder = instance.dataFolder
     private val config = instance.config
@@ -87,15 +90,6 @@ object VectorUtils {
     }
 
     /**
-     * This private method sends helpful information to command sender
-     */
-    fun CommandSender.sendHelp() = sendMessage("\n \n \n" +
-            "===== Command <vector> =====\n" +
-            "/vector -> Toggles vector feature\n" +
-            "/vector help -> Shows vector help\n" +
-            "/vector config <key|reset> [value] -> Updates plugin.yml\n")
-
-    /**
      * This private method handles config-related commands
      *
      * @param   args    arguments from the command
@@ -116,19 +110,6 @@ object VectorUtils {
             else -> sender.unrecognizedMessage("Unrecognized key", args[1])
         } else -> sender.unrecognizedMessage("args", args.drop(3).toString())
     }
-
-    /**
-     * This method returns true if the [String] contains "conf" or "set"
-     */
-    fun String.resetRegexMatch() = contains(Regex("(?i)conf|set"))
-
-    /**
-     * This method filters [List] of [String] by whether each [String] starts with 'key'
-     *
-     * @param   key the key [String] to filter with
-     * @return  [List] of [String] after filtering
-     */
-    fun List<String>.filter(key: String) = filter { it.startsWith(key, true) }
 
     /**
      * This method sends sender an alert saying that the message
@@ -153,7 +134,6 @@ object VectorUtils {
      *
      * @return  [Double] random value
      */
-    fun newRandom(): Double = nextInt(0, 255).toDouble()
 
     private fun getCurrentConfig(args: Array<out String>, sender: CommandSender) = try {
         val path = File(dataFolder, "config.yml").toPath()

@@ -22,10 +22,7 @@ package com.github.patrick.vector
 
 import com.github.noonmaru.tap.event.ASMEventExecutor.registerEvents
 import com.github.patrick.vector.VectorUtils.configCommand
-import com.github.patrick.vector.VectorUtils.filter
 import com.github.patrick.vector.VectorUtils.getKeys
-import com.github.patrick.vector.VectorUtils.resetRegexMatch
-import com.github.patrick.vector.VectorUtils.sendHelp
 import com.github.patrick.vector.VectorUtils.unrecognizedMessage
 import org.bukkit.Bukkit.broadcastMessage
 import org.bukkit.Bukkit.getScheduler
@@ -52,21 +49,21 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
      */
     override fun onCommand(sender: CommandSender, command: Command?, label: String?, args: Array<out String>): Boolean {
         if (args.isNotEmpty()) when {
-            args[0].contains("help", true) -> sender.sendHelp()
+            args[0].contains("help", true) -> sender
+                .sendMessage("\n \n \n/vector -> Toggles vector feature\n/vector config <key|reset> [value] -> Updates plugin.yml\n")
             args[0].resetRegexMatch() && sender.hasPermission("command.vector.config") -> configCommand(args, sender)
             else -> sender.unrecognizedMessage("args", args[0])
         } else if (sender.hasPermission("command.vector.toggle")) {
             if (!status) {
-                status = true
                 registerEvents(VectorEventListener(), instance)
                 getScheduler().runTaskTimer(instance, VectorParticleTask(), 0, 1)
                 broadcastMessage("Vector On")
             } else {
-                status = false
                 unregisterAll(instance as JavaPlugin)
                 getScheduler().cancelTasks(instance)
                 broadcastMessage("Vector Off")
             }
+            status = !status
         }
         return true
     }
@@ -87,4 +84,8 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
             } else emptyList()
             else -> emptyList()
         }
+
+
+    private fun String.resetRegexMatch() = contains(Regex("(?i)conf|set"))
+    private fun List<String>.filter(key: String) = filter { it.startsWith(key, true) }
 }

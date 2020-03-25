@@ -37,7 +37,7 @@
 >
 >...
 >dependencies {
->    implementation 'com.github.patrick-mc:vector-game:1.0.5'
+>    implementation 'com.github.patrick-mc:vector-game:1.0.6'
 >}
 >```
 
@@ -52,6 +52,6 @@
 >
 >...
 >dependencies {
->    implementation("com.github.patrick-mc:vector-game:1.0.5")
+>    implementation("com.github.patrick-mc:vector-game:1.0.6")
 >}
 >```
