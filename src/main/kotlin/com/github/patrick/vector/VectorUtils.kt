@@ -27,6 +27,7 @@ object VectorUtils {
     private val dataFolder = instance.dataFolder
     private val config = instance.config
     private val logger = instance.logger
+    private val file = File(dataFolder, "config.yml")
 
     /**
      * This private method will set the velocity of the entity depending on
@@ -58,15 +59,14 @@ object VectorUtils {
         var distance = 0.0
 
         this.world.entities?.forEach { entity ->
-            if (entity != this)
-                wrapEntity(entity)?.boundingBox?.expand(5.0)
-                    ?.calculateRayTrace(Vector(loc.x, loc.y, loc.z), Vector(view.x, view.y, view.z))?.let {
-                        val currentDistance = loc.distance(entity.location)
-                        if (currentDistance < distance || distance == 0.0) {
-                            distance = currentDistance
-                            found = entity
-                        }
+            wrapEntity(entity)?.boundingBox?.expand(5.0)
+                ?.calculateRayTrace(Vector(loc.x, loc.y, loc.z), Vector(view.x, view.y, view.z))?.let {
+                    val currentDistance = loc.distance(entity.location)
+                    if (currentDistance < distance || distance == 0.0 && entity != this) {
+                        distance = currentDistance
+                        found = entity
                     }
+            }
         }
         found?.let { selectedEntities[this] = it }
     }
@@ -99,7 +99,7 @@ object VectorUtils {
         1 -> sender.sendMessage("Required: key, value")
         2 -> when {
             args[1].contains("reset", true) -> {
-                File(dataFolder, "config.yml").delete()
+                file.delete()
                 instance.saveDefaultConfig()
             }
             getKeys().contains(args[1]) -> getCurrentConfig(args, sender)
@@ -128,15 +128,8 @@ object VectorUtils {
      */
     fun getKeys() = config.getKeys(false).toList()
 
-    /**
-     * Gets a new random integer value between 0 and 255,
-     * and converts it to double
-     *
-     * @return  [Double] random value
-     */
-
     private fun getCurrentConfig(args: Array<out String>, sender: CommandSender) = try {
-        val path = File(dataFolder, "config.yml").toPath()
+        val path = file.toPath()
         val lines = Files.readAllLines(path, StandardCharsets.UTF_8)
 
         for (i in 0 until lines.count())
@@ -150,28 +143,22 @@ object VectorUtils {
 
     private fun setConfig(args: Array<out String>, sender: CommandSender) {
         try {
-            val path = File(dataFolder, "config.yml").toPath()
+            val path = file.toPath()
             val lines = Files.readAllLines(path, StandardCharsets.UTF_8)
             for (i in 0 until lines.count()) {
-                if (lines[i].contains(args[1])) { when {
+                if (lines[i].contains(args[1])) when {
                     args[1].contains("double") -> lines[i] = "${args[1]}: ${args[2].toDouble()}"
                     args[1].contains("item") -> {
-                        Material.getMaterial(args[2].toUpperCase()) ?: sender.unrecognizedMessage("key", args[2])
+                        Material.getMaterial(args[2].toUpperCase()) ?: sender.unrecognizedMessage("key", args[2]).also { return }
                         lines[i] = "${args[1]}: ${args[2].toUpperCase()}"
                     }
                     args[2].matches(Regex("true|false")) -> lines[i] = "${args[1]}: ${args[2]}"
                     else -> sender.unrecognizedMessage("value", args[2]).also { return }
-                }
-                    sender.sendMessage(lines[i])
-                }
+                }.also { sender.sendMessage(lines[i]) }
             }
             Files.write(path, lines, StandardCharsets.UTF_8)
-        } catch (e: Exception) {
-            when (e) {
-                is IOException -> logger.info("Cannot read/write to config.yml")
-                is NumberFormatException -> sender.unrecognizedMessage("value", args[2])
-            }
-        }
+        } catch (e: NumberFormatException) { sender.unrecognizedMessage("value", args[2]) }
+        catch (e: IOException) { logger.info("Cannot read/write to config.yml") }
     }
 
     private fun Player.getTargetMapping() =
