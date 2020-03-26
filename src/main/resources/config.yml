@@ -16,6 +16,11 @@ use-both-hands: false
 # If false, players can set velocity multiple times until selecting new entity.
 set-single-time: true
 
+# Sets entities' hitbox expansion when selecting with vector item
+# If too high, selection won't work well.
+# Recommended value: ~ 4.0
+hitbox-expansion-double: 2.0
+
 # Sets players' visibility length when selecting entities and setting velocities.
 # Put double value to modify visibility length.
 # Recommended value: 4.0 ~

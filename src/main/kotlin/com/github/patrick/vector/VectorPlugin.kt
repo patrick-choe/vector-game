@@ -20,8 +20,12 @@
 
 package com.github.patrick.vector
 
+import com.github.noonmaru.tap.LibraryLoader.getBukkitVersion
+import com.github.patrick.vector.VectorUtils.isLegacyVersion
+import com.github.patrick.vector.VectorUtils.isModernVersion
+import org.bukkit.Bukkit.getPluginManager
 import org.bukkit.Bukkit.getScheduler
-import org.bukkit.Material.AIR
+import org.bukkit.Material.BLAZE_ROD
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
@@ -35,12 +39,14 @@ class VectorPlugin : JavaPlugin() {
      * This companion object saves project-wide variables.
      */
     companion object {
+        lateinit var version: String
         lateinit var instance: VectorPlugin
         val selectedEntities = HashMap<Player, Entity>()
         var lastModified: Long? = null
-        var vectorItem = AIR
+        var vectorItem = BLAZE_ROD
         var bothHands = false
         var singleTime = false
+        var hitBoxExpansion = 0.0
         var visibilityLength = 0.0
         var velocityModifier = 0.0
         var maxVelocity = 0.0
@@ -52,10 +58,15 @@ class VectorPlugin : JavaPlugin() {
      * for '/vector' command, and registers 'VectorConfigTask'.
      */
     override fun onEnable() {
+        version = getBukkitVersion().split(" ")[0]
         instance = this
         saveDefaultConfig()
-        getCommand("vector").executor = VectorCommand(this)
-        getCommand("vector").tabCompleter = VectorCommand(this)
+        getCommand("vector")?.setExecutor(VectorCommand(this))
+        getCommand("vector")?.tabCompleter = VectorCommand(this)
         getScheduler().runTaskTimer(this, VectorConfigTask(this), 0, 1)
+        if (isLegacyVersion()) {
+            if (!getPluginManager().isPluginEnabled("Tap")) getPluginManager().disablePlugin(this)
+        }
+        else if (!isModernVersion()) getPluginManager().disablePlugin(this)
     }
 }

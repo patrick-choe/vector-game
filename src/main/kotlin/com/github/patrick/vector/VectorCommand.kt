@@ -20,11 +20,11 @@
 
 package com.github.patrick.vector
 
-import com.github.noonmaru.tap.event.ASMEventExecutor.registerEvents
 import com.github.patrick.vector.VectorUtils.configCommand
 import com.github.patrick.vector.VectorUtils.getKeys
 import com.github.patrick.vector.VectorUtils.unrecognizedMessage
 import org.bukkit.Bukkit.broadcastMessage
+import org.bukkit.Bukkit.getPluginManager
 import org.bukkit.Bukkit.getScheduler
 import org.bukkit.Material
 import org.bukkit.command.Command
@@ -47,7 +47,7 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
      * When the command starting with '/vector' is executed,
      * below codes are executed.
      */
-    override fun onCommand(sender: CommandSender, command: Command?, label: String?, args: Array<out String>): Boolean {
+    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (args.isNotEmpty()) when {
             args[0].contains("help", true) -> sender
                 .sendMessage("\n \n \n/vector -> Toggles vector feature\n/vector config <key|reset> [value] -> Updates plugin.yml\n")
@@ -55,7 +55,7 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
             else -> sender.unrecognizedMessage("args", args[0])
         } else if (sender.hasPermission("command.vector.toggle")) {
             if (!status) {
-                registerEvents(VectorEventListener(), instance)
+                getPluginManager().registerEvents(VectorEventListener(), instance)
                 getScheduler().runTaskTimer(instance, VectorParticleTask(), 0, 1)
                 broadcastMessage("Vector On")
             } else {
@@ -72,7 +72,7 @@ class VectorCommand(private val instance: VectorPlugin): CommandExecutor, TabCom
      * When the players use 'tab' key to get suggestion,
      * below codes are executed.
      */
-    override fun onTabComplete(sender: CommandSender?, command: Command?, alias: String?, args: Array<out String>) =
+    override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>) =
         when (args.size) {
             1 -> listOf("config", "help").filter(args[0])
             2 -> if (args[0].resetRegexMatch()) getKeys().filter(args[1]) else emptyList()

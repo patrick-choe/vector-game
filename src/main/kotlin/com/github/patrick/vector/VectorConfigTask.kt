@@ -21,12 +21,14 @@
 package com.github.patrick.vector
 
 import com.github.patrick.vector.VectorPlugin.Companion.bothHands
+import com.github.patrick.vector.VectorPlugin.Companion.hitBoxExpansion
 import com.github.patrick.vector.VectorPlugin.Companion.lastModified
 import com.github.patrick.vector.VectorPlugin.Companion.maxVelocity
 import com.github.patrick.vector.VectorPlugin.Companion.singleTime
 import com.github.patrick.vector.VectorPlugin.Companion.vectorItem
 import com.github.patrick.vector.VectorPlugin.Companion.velocityModifier
 import com.github.patrick.vector.VectorPlugin.Companion.visibilityLength
+import org.bukkit.Material.BLAZE_ROD
 import org.bukkit.Material.getMaterial
 import java.io.File
 
@@ -46,9 +48,10 @@ class VectorConfigTask(private val instance: VectorPlugin) : Runnable {
         if (last != lastModified) {
             lastModified = last
             instance.reloadConfig()
-            vectorItem = getMaterial(config.getString("vector-item"))
+            vectorItem = config.getString("vector-item")?.let { getMaterial(it) }?: BLAZE_ROD
             bothHands = config.getBoolean("use-both-hands")
             singleTime = config.getBoolean("set-single-time")
+            hitBoxExpansion = config.getDouble("hitbox-expansion-double")
             visibilityLength = config.getDouble("visibility-length-double")
             velocityModifier = config.getDouble("velocity-modifier-double")
             maxVelocity = config.getDouble("max-velocity-double")

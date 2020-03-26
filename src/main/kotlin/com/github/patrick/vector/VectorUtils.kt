@@ -1,16 +1,19 @@
 package com.github.patrick.vector
 
-import com.github.noonmaru.math.Vector
-import com.github.noonmaru.tap.Tap.MATH
-import com.github.noonmaru.tap.entity.TapEntity.wrapEntity
 import com.github.patrick.vector.VectorPlugin.Companion.instance
 import com.github.patrick.vector.VectorPlugin.Companion.maxVelocity
 import com.github.patrick.vector.VectorPlugin.Companion.selectedEntities
 import com.github.patrick.vector.VectorPlugin.Companion.singleTime
 import com.github.patrick.vector.VectorPlugin.Companion.velocityModifier
+import com.github.patrick.vector.VectorPlugin.Companion.version
 import com.github.patrick.vector.VectorPlugin.Companion.visibilityLength
+import com.github.patrick.vector.v1_12_R1.TapSupport.newTapRayTraceBlock
+import com.github.patrick.vector.v1_12_R1.TapSupport.newTapRayTraceEntity
+import com.github.patrick.vector.v1_15_R1.BukkitSupport.newBukkitRayTraceBlock
+import com.github.patrick.vector.v1_15_R1.BukkitSupport.newBukkitRayTraceEntity
 import org.bukkit.Location
-import org.bukkit.Material
+import org.bukkit.Material.AIR
+import org.bukkit.Material.getMaterial
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
@@ -37,7 +40,7 @@ object VectorUtils {
      */
     fun Player.setTargetVelocity(): Boolean? {
         selectedEntities[this]?.let {
-            val vector = player.getTarget().subtract(it.location).toVector()
+            val vector = getTarget().subtract(it.location).toVector()
             it.velocity = if (vector.length() < maxVelocity / velocityModifier) vector.multiply(
                 velocityModifier
             ) else
@@ -58,14 +61,16 @@ object VectorUtils {
         var found: Entity? = null
         var distance = 0.0
 
-        this.world.entities?.forEach { entity ->
-            wrapEntity(entity)?.boundingBox?.expand(5.0)
-                ?.calculateRayTrace(Vector(loc.x, loc.y, loc.z), Vector(view.x, view.y, view.z))?.let {
-                    val currentDistance = loc.distance(entity.location)
-                    if (currentDistance < distance || distance == 0.0 && entity != this) {
-                        distance = currentDistance
-                        found = entity
-                    }
+        world.entities.forEach {
+            val result = when {
+                isLegacyVersion() -> it.newTapRayTraceEntity(loc, view)
+                isModernVersion() -> it.newBukkitRayTraceEntity(loc, view)
+                else -> false
+            }
+            val currentDistance = loc.distance(it.location)
+            if ((currentDistance < distance || distance == 0.0) && it != this && result) {
+                distance = currentDistance
+                found = it
             }
         }
         found?.let { selectedEntities[this] = it }
@@ -80,13 +85,12 @@ object VectorUtils {
      */
     fun Player.getTarget(): Location {
         val loc = getTargetMapping().key
-        val view = getTargetMapping().value
-        val block =
-            MATH.rayTraceBlock(loc.world, Vector(loc.x, loc.y, loc.z), Vector(view.x, view.y, view.z), 0)
-                ?: return loc.clone().add(eyeLocation.direction.clone().normalize().multiply(visibilityLength))
-        block.blockPoint.let {
-            return loc.world.getBlockAt(it.x, it.y, it.z).getRelative(block.face).location.add(0.5, 0.5, 0.5)
-        }
+        return when {
+            isLegacyVersion() -> newTapRayTraceBlock(loc, getTargetMapping().value)
+            isModernVersion() -> newBukkitRayTraceBlock(loc, eyeLocation.direction)
+            else -> null
+        }?.location?.add(0.5, 0.5, 0.5)
+            ?: loc.clone().add(eyeLocation.direction.clone().normalize().multiply(visibilityLength))
     }
 
     /**
@@ -128,6 +132,20 @@ object VectorUtils {
      */
     fun getKeys() = config.getKeys(false).toList()
 
+    /**
+     * This method checks if the version is a legacy support.
+     *
+     * @return  true if the version contains 1.10 ~ 1.12
+     */
+    fun isLegacyVersion() = version.contains(Regex("1.10|1.11|1.12"))
+
+    /**
+     * This method checks if the version is a modern support.
+     *
+     * @return  true if the version contains 1.13 ~ 1.15
+     */
+    fun isModernVersion() = version.contains(Regex("1.13|1.14|1.15"))
+
     private fun getCurrentConfig(args: Array<out String>, sender: CommandSender) = try {
         val path = file.toPath()
         val lines = Files.readAllLines(path, StandardCharsets.UTF_8)
@@ -147,9 +165,13 @@ object VectorUtils {
             val lines = Files.readAllLines(path, StandardCharsets.UTF_8)
             for (i in 0 until lines.count()) {
                 if (lines[i].contains(args[1])) when {
-                    args[1].contains("double") -> lines[i] = "${args[1]}: ${args[2].toDouble()}"
+                    args[1].contains("double") -> {
+                        if (args[2].toDouble() > 0) lines[i] = "${args[1]}: ${args[2].toDouble()}"
+                        else sender.sendMessage("value should be positive.").also { return }
+                    }
                     args[1].contains("item") -> {
-                        Material.getMaterial(args[2].toUpperCase()) ?: sender.unrecognizedMessage("key", args[2]).also { return }
+                        getMaterial(args[2].toUpperCase()) ?: sender.unrecognizedMessage("key", args[2]).also { return }
+                        if (getMaterial(args[2]) == AIR) sender.sendMessage("value should not be AIR.").also { return }
                         lines[i] = "${args[1]}: ${args[2].toUpperCase()}"
                     }
                     args[2].matches(Regex("true|false")) -> lines[i] = "${args[1]}: ${args[2]}"

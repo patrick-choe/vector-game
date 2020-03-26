@@ -22,6 +22,10 @@ package com.github.patrick.vector
 
 import com.github.patrick.vector.VectorPlugin.Companion.selectedEntities
 import com.github.patrick.vector.VectorUtils.getTarget
+import com.github.patrick.vector.VectorUtils.isLegacyVersion
+import com.github.patrick.vector.VectorUtils.isModernVersion
+import org.bukkit.Color.fromRGB
+import org.bukkit.Particle.DustOptions
 import org.bukkit.Particle.REDSTONE
 import kotlin.random.Random.Default.nextInt
 
@@ -43,10 +47,19 @@ class VectorParticleTask : Runnable {
             for (i in 0 until pos.distance(target).times(5).toInt()) {
                 val loc =
                     pos.add(target.toVector().clone().subtract(pos.toVector()).normalize().multiply(0.2))
-                pos.world.spawnParticle(REDSTONE, loc, 0, newRandom(), newRandom(), newRandom())
+                when {
+                    isLegacyVersion() ->
+                        pos.world?.spawnParticle(REDSTONE, loc, 0, newDouble(), newDouble(), newDouble())
+                    isModernVersion() ->
+                        pos.world?.spawnParticle(REDSTONE, loc, 0, 0.0, 0.0, 0.0,
+                            DustOptions(fromRGB(newInt(), newInt(), newInt()), 1F)
+                        )
+                }
             }
         }
     }
 
-    private fun newRandom() = nextInt(0, 255).toDouble()
+    private fun newInt() = nextInt(0, 255)
+
+    private fun newDouble() = nextInt(0, 255).toDouble()
 }

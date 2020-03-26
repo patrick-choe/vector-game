@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.patrick-mc"
-version = "1.0.6"
+version = "1.1"
 
 repositories {
     maven("https://repo.maven.apache.org/maven2/")
@@ -18,7 +18,7 @@ repositories {
 
 dependencies {
     api(kotlin("stdlib-jdk8"))
-    api("org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT")
+    api("org.spigotmc:spigot-api:1.15.2-R0.1-SNAPSHOT")
     api("com.github.noonmaru:tap:1.0.1")
 }
 
